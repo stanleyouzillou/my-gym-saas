@@ -9,9 +9,9 @@ import { Member } from '../../../domain/entities/Member';
 const hasDb = !!process.env.DATABASE_URL;
 
 (hasDb ? describe : describe.skip)('PrismaMemberRepository (integration)', () => {
-  const prisma = new PrismaClient();
-  const members = new PrismaMemberRepository(prisma);
-  const tenants = new PrismaTenantRepository(prisma);
+  let prisma: PrismaClient;
+  let members: PrismaMemberRepository;
+  let tenants: PrismaTenantRepository;
 
   const unique = `t_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const tenantName = `Tenant_${unique}`;
@@ -19,6 +19,9 @@ const hasDb = !!process.env.DATABASE_URL;
   let tenantId = '';
 
   beforeAll(async () => {
+    prisma = new PrismaClient();
+    members = new PrismaMemberRepository(prisma);
+    tenants = new PrismaTenantRepository(prisma);
     const t = await tenants.create(tenantName);
     tenantId = t.id;
   });

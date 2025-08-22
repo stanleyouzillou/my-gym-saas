@@ -5,10 +5,15 @@ import { PrismaTenantRepository } from './tenantRepo';
 const hasDb = !!process.env.DATABASE_URL;
 
 (hasDb ? describe : describe.skip)('PrismaTenantRepository (integration)', () => {
-  const prisma = new PrismaClient();
-  const tenants = new PrismaTenantRepository(prisma);
+  let prisma: PrismaClient;
+  let tenants: PrismaTenantRepository;
   const unique = `t_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const tenantName = `Tenant_${unique}`;
+
+  beforeAll(() => {
+    prisma = new PrismaClient();
+    tenants = new PrismaTenantRepository(prisma);
+  });
 
   afterAll(async () => {
     await prisma.tenant.deleteMany({ where: { name: tenantName } }).catch(() => {});
