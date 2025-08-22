@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, develop, "feat/**" ]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.14.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies (workspace)
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Generate Prisma Client
+        run: pnpm --filter ./apps/api exec prisma generate --schema=../../prisma/schema.prisma
+
+      - name: Lint (web)
+        run: pnpm --filter ./apps/web run lint
+
+      - name: Lint (api)
+        run: pnpm --filter ./apps/api run lint
+
+      - name: Unit tests (api)
+        run: pnpm --filter ./apps/api run test -- --runInBand
+
+      - name: E2E tests (api)
+        run: pnpm --filter ./apps/api run test:e2e
+
+      - name: BDD tests (api)
+        run: pnpm --filter ./apps/api run test:bdd
+
+      - name: Acceptance smoke - start API and verify /api/sessions
+        run: |
+          set -e
+          pnpm --filter ./apps/api run start:dev &
+          # Wait for server to be ready
+          for i in {1..30}; do
+            if curl -sf http://localhost:3001/api/sessions > /dev/null; then
+              echo "API is up"; break; fi
+            sleep 2
+          done
+          curl -sf http://localhost:3001/api/sessions | jq .

@@ -1,0 +1,20 @@
+{
+  "name": "gym-studio",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "packageManager": "pnpm@10.14.0",
+  "devDependencies": {
+    "cross-env": "^10.0.0",
+    "prisma": "6.14.0",
+    "tsx": "^4.20.4"
+  },
+  "dependencies": {
+    "@prisma/client": "6.14.0"
+  },
+  "scripts": {
+    "db:seed": "node prisma/seeds/index.cjs"
+  }
+}

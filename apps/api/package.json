@@ -1,0 +1,95 @@
+{
+  "name": "api",
+  "version": "0.0.1",
+  "description": "",
+  "author": "",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "nest build",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "start": "cross-env DOTENV_CONFIG_PATH=../../.env node -r dotenv/config ./node_modules/@nestjs/cli/bin/nest.js start",
+    "start:dev": "cross-env DOTENV_CONFIG_PATH=../../.env node -r dotenv/config ./node_modules/@nestjs/cli/bin/nest.js start --watch",
+    "start:dev:db": "cross-env DOTENV_CONFIG_PATH=../../.env PORT=3002 USE_DB_PRISMA=true node -r dotenv/config ./node_modules/@nestjs/cli/bin/nest.js start --watch",
+    "start:dev:mem": "cross-env DOTENV_CONFIG_PATH=../../.env PORT=3001 node -r dotenv/config ./node_modules/@nestjs/cli/bin/nest.js start --watch",
+    "start:debug": "nest start --debug --watch",
+    "start:prod": "node dist/main",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "test": "cross-env DOTENV_CONFIG_PATH=../../.env node -r dotenv/config ./node_modules/jest/bin/jest.js",
+    "test:watch": "cross-env DOTENV_CONFIG_PATH=../../.env node -r dotenv/config ./node_modules/jest/bin/jest.js --watch",
+    "test:cov": "cross-env DOTENV_CONFIG_PATH=../../.env node -r dotenv/config ./node_modules/jest/bin/jest.js --coverage",
+    "test:debug": "cross-env DOTENV_CONFIG_PATH=../../.env node -r dotenv/config node --inspect-brk -r tsconfig-paths/register -r ts-node/register ./node_modules/jest/bin/jest.js --runInBand",
+    "test:e2e": "cross-env DOTENV_CONFIG_PATH=../../.env node -r dotenv/config ./node_modules/jest/bin/jest.js --config ./test/jest-e2e.json",
+    "test:bdd": "cross-env DOTENV_CONFIG_PATH=../../.env cucumber-js ../../features/**/*.feature --require-module ts-node/register --require dotenv/config --require bdd/steps/**/*.ts --format progress",
+    "test:bdd:mvp": "cross-env DOTENV_CONFIG_PATH=../../.env cucumber-js ../../features/{landing,member-signup,sessions-list,session-register}.feature --require-module ts-node/register --require dotenv/config --require bdd/steps/**/*.ts --format progress",
+    "test:bdd:mvp:report": "cross-env DOTENV_CONFIG_PATH=../../.env cucumber-js ../../features/{landing,member-signup,sessions-list,session-register}.feature --require-module ts-node/register --require dotenv/config --require bdd/steps/**/*.ts --format json:../../.windsurf/plans/bdd-mvp-report.json --format progress",
+    "test:bdd:clerk": "cross-env DOTENV_CONFIG_PATH=../../.env cucumber-js ../../features/clerk-user-sync.feature --require-module ts-node/register --require dotenv/config --require bdd/steps/clerk-sync.steps.ts --format progress"
+  },
+  "dependencies": {
+    "@clerk/clerk-sdk-node": "^5.1.6",
+    "@nestjs/common": "^11.0.1",
+    "@nestjs/core": "^11.0.1",
+    "@nestjs/platform-express": "^11.0.1",
+    "@prisma/client": "6.14.0",
+    "@prisma/extension-accelerate": "^2.0.2",
+    "@sendgrid/mail": "^8.1.5",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "helmet": "^8.1.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "stripe": "^18.4.0"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^11.1.0",
+    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/js": "^9.18.0",
+    "@nestjs/cli": "^11.0.0",
+    "@nestjs/schematics": "^11.0.0",
+    "@nestjs/testing": "^11.0.1",
+    "@types/body-parser": "^1.19.6",
+    "@types/dotenv": "^8.2.3",
+    "@types/express": "^5.0.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.10.7",
+    "@types/supertest": "^6.0.2",
+    "body-parser": "^2.2.0",
+    "dotenv": "^17.2.1",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-prettier": "^5.2.2",
+    "globals": "^16.0.0",
+    "jest": "^30.0.0",
+    "prettier": "^3.4.2",
+    "prisma": "6.14.0",
+    "source-map-support": "^0.5.21",
+    "supertest": "^7.0.0",
+    "svix": "^1.74.1",
+    "ts-jest": "^29.2.5",
+    "ts-loader": "^9.5.2",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.20.0"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node",
+    "setupFiles": [
+      "<rootDir>/jest.setup.ts"
+    ]
+  }
+}

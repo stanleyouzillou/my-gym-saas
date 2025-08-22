@@ -1,0 +1,13 @@
+{
+  "cucumber.features": [
+    "features/**/*.feature"
+  ],
+  "cucumber.glue": [
+    "apps/api/bdd/steps/**/*.ts"
+  ],
+  "cucumberautocomplete.steps": [
+    "apps/api/bdd/steps/**/*.ts"
+  ],
+  "cucumberautocomplete.syncfeatures": "features/**/*.feature",
+  "cucumberautocomplete.strictGherkinCompletion": true
+}

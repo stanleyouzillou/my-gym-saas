@@ -1,0 +1,31 @@
+@baseUrl = http://localhost:3002
+@json = application/json
+
+### Happy path: create session
+POST {{baseUrl}}/api/sessions
+Content-Type: {{json}}
+
+{
+  "programId": "yoga_basics",
+  "startTime": "2025-09-01T10:00:00Z",
+  "durationMinutes": 60,
+  "maxCapacity": 10,
+  "coachName": "Coach A"
+}
+
+### List sessions for program
+GET {{baseUrl}}/api/sessions?programId=yoga_basics
+
+### Debug: list recorded domain events
+GET {{baseUrl}}/api/_debug/events
+
+### Create pilates session
+POST {{baseUrl}}/api/sessions
+Content-Type: {{json}}
+
+{
+  "programId": "pilates_intro",
+  "startTime": "2025-09-02T12:00:00Z",
+  "durationMinutes": 45,
+  "maxCapacity": 12
+}

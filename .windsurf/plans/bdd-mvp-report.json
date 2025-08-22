@@ -1,0 +1,455 @@
+[
+  {
+    "description": "  As a visitor\n  I want to see a clear CTA to join\n  So that I can start signup",
+    "elements": [
+      {
+        "description": "",
+        "id": "landing-page-cta;visitor-sees-cta-and-can-start-signup",
+        "keyword": "Scenario",
+        "line": 6,
+        "name": "Visitor sees CTA and can start signup",
+        "steps": [
+          {
+            "arguments": [],
+            "keyword": "Given ",
+            "line": 7,
+            "name": "I am an anonymous visitor",
+            "match": {
+              "location": "bdd\\steps\\member-journey.steps.ts:40"
+            },
+            "result": {
+              "status": "pending",
+              "duration": 288100
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "When ",
+            "line": 8,
+            "name": "I open the landing page",
+            "match": {
+              "location": "bdd\\steps\\member-journey.steps.ts:44"
+            },
+            "result": {
+              "status": "skipped",
+              "duration": 0
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Then ",
+            "line": 9,
+            "name": "I see a \"Join Now\" call to action",
+            "match": {
+              "location": "bdd\\steps\\member-journey.steps.ts:48"
+            },
+            "result": {
+              "status": "skipped",
+              "duration": 0
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "When ",
+            "line": 10,
+            "name": "I click the \"Join Now\" button",
+            "match": {
+              "location": "bdd\\steps\\member-journey.steps.ts:52"
+            },
+            "result": {
+              "status": "skipped",
+              "duration": 0
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Then ",
+            "line": 11,
+            "name": "I am taken to a fake checkout page",
+            "match": {
+              "location": "bdd\\steps\\member-journey.steps.ts:56"
+            },
+            "result": {
+              "status": "skipped",
+              "duration": 0
+            }
+          }
+        ],
+        "tags": [],
+        "type": "scenario"
+      }
+    ],
+    "id": "landing-page-cta",
+    "line": 1,
+    "keyword": "Feature",
+    "name": "Landing page CTA",
+    "tags": [],
+    "uri": "..\\..\\features\\landing.feature"
+  },
+  {
+    "description": "  As a visitor\n  I want to sign up with a fake checkout\n  So that I become a Member and can access sessions",
+    "elements": [
+      {
+        "description": "",
+        "id": "member-signup-via-fake-checkout;successful-fake-checkout-with-mock-payment-activates-membership",
+        "keyword": "Scenario",
+        "line": 6,
+        "name": "Successful fake checkout with mock payment activates membership",
+        "steps": [
+          {
+            "arguments": [],
+            "keyword": "Given ",
+            "line": 7,
+            "name": "I am on the fake checkout page",
+            "match": {
+              "location": "bdd\\steps\\member-journey.steps.ts:61"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 49800
+            }
+          },
+          {
+            "arguments": [
+              {
+                "rows": [
+                  {
+                    "cells": [
+                      "email",
+                      "valid.user@example.com"
+                    ]
+                  },
+                  {
+                    "cells": [
+                      "firstName",
+                      "Valid"
+                    ]
+                  },
+                  {
+                    "cells": [
+                      "lastName",
+                      "User"
+                    ]
+                  },
+                  {
+                    "cells": [
+                      "tenantName",
+                      "DefaultFranchise"
+                    ]
+                  }
+                ]
+              }
+            ],
+            "keyword": "When ",
+            "line": 8,
+            "name": "I submit my details:",
+            "match": {
+              "location": "bdd\\steps\\member-journey.steps.ts:65"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 19088600
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Then ",
+            "line": 13,
+            "name": "I receive a login link or token",
+            "match": {
+              "location": "bdd\\steps\\member-journey.steps.ts:84"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 117999
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "And ",
+            "line": 14,
+            "name": "I am taken to the payment page",
+            "match": {
+              "location": "bdd\\steps\\member-journey.steps.ts:94"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 57999
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "When ",
+            "line": 15,
+            "name": "I confirm the payment",
+            "match": {
+              "location": "bdd\\steps\\member-journey.steps.ts:101"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 7179299
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Then ",
+            "line": 16,
+            "name": "membership is activated",
+            "match": {
+              "location": "bdd\\steps\\member-journey.steps.ts:109"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 3152399
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "And ",
+            "line": 17,
+            "name": "I can access the sessions list",
+            "match": {
+              "location": "bdd\\steps\\member-journey.steps.ts:118"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 4200499
+            }
+          }
+        ],
+        "tags": [],
+        "type": "scenario"
+      }
+    ],
+    "id": "member-signup-via-fake-checkout",
+    "line": 1,
+    "keyword": "Feature",
+    "name": "Member signup via fake checkout",
+    "tags": [],
+    "uri": "..\\..\\features\\member-signup.feature"
+  },
+  {
+    "description": "  As a member\n  I want to register for a session\n  So that I can attend or be added to the waitlist when full",
+    "elements": [
+      {
+        "description": "",
+        "id": "member-registers-for-a-session-with-capacity-rules;booking-succeeds-when-capacity-available",
+        "keyword": "Scenario",
+        "line": 9,
+        "name": "Booking succeeds when capacity available",
+        "steps": [
+          {
+            "arguments": [],
+            "keyword": "Given ",
+            "line": 7,
+            "name": "I am an authenticated member of tenant \"DefaultFranchise\"",
+            "match": {
+              "location": "bdd\\steps\\member-journey.steps.ts:128"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 143599
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Given ",
+            "line": 10,
+            "name": "a session exists with remaining capacity",
+            "match": {
+              "location": "bdd\\steps\\member-journey.steps.ts:160"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 3671299
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "When ",
+            "line": 11,
+            "name": "I register for the session",
+            "match": {
+              "location": "bdd\\steps\\member-journey.steps.ts:169"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 3177300
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Then ",
+            "line": 12,
+            "name": "I have a Booking with status \"BOOKED\"",
+            "match": {
+              "location": "bdd\\steps\\member-journey.steps.ts:178"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 106299
+            }
+          }
+        ],
+        "tags": [],
+        "type": "scenario"
+      },
+      {
+        "description": "",
+        "id": "member-registers-for-a-session-with-capacity-rules;waitlist-when-session-is-full",
+        "keyword": "Scenario",
+        "line": 14,
+        "name": "Waitlist when session is full",
+        "steps": [
+          {
+            "arguments": [],
+            "keyword": "Given ",
+            "line": 7,
+            "name": "I am an authenticated member of tenant \"DefaultFranchise\"",
+            "match": {
+              "location": "bdd\\steps\\member-journey.steps.ts:128"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 42300
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Given ",
+            "line": 15,
+            "name": "a session exists that is full at max capacity",
+            "match": {
+              "location": "bdd\\steps\\member-journey.steps.ts:188"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 8455500
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "When ",
+            "line": 16,
+            "name": "I register for the session",
+            "match": {
+              "location": "bdd\\steps\\member-journey.steps.ts:169"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 3838100
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Then ",
+            "line": 17,
+            "name": "I am placed on the waitlist for that session",
+            "match": {
+              "location": "bdd\\steps\\member-journey.steps.ts:228"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 3745699
+            }
+          }
+        ],
+        "tags": [],
+        "type": "scenario"
+      }
+    ],
+    "id": "member-registers-for-a-session-with-capacity-rules",
+    "line": 1,
+    "keyword": "Feature",
+    "name": "Member registers for a session with capacity rules",
+    "tags": [],
+    "uri": "..\\..\\features\\session-register.feature"
+  },
+  {
+    "description": "  As a member\n  I want to view upcoming sessions\n  So that I can choose a class to attend",
+    "elements": [
+      {
+        "description": "",
+        "id": "sessions-list-for-authenticated-member;see-upcoming-sessions-with-capacity-info",
+        "keyword": "Scenario",
+        "line": 10,
+        "name": "See upcoming sessions with capacity info",
+        "steps": [
+          {
+            "arguments": [],
+            "keyword": "Given ",
+            "line": 7,
+            "name": "I am an authenticated member of tenant \"DefaultFranchise\"",
+            "match": {
+              "location": "bdd\\steps\\member-journey.steps.ts:128"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 69899
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "And ",
+            "line": 8,
+            "name": "upcoming sessions exist for my tenant",
+            "match": {
+              "location": "bdd\\steps\\member-journey.steps.ts:136"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 44899
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "When ",
+            "line": 11,
+            "name": "I navigate to the sessions page",
+            "match": {
+              "location": "bdd\\steps\\member-journey.steps.ts:140"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 2955500
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Then ",
+            "line": 12,
+            "name": "I see a list of upcoming sessions",
+            "match": {
+              "location": "bdd\\steps\\member-journey.steps.ts:148"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 69899
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "And ",
+            "line": 13,
+            "name": "each session shows start time, coach, and remaining capacity",
+            "match": {
+              "location": "bdd\\steps\\member-journey.steps.ts:154"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 54200
+            }
+          }
+        ],
+        "tags": [],
+        "type": "scenario"
+      }
+    ],
+    "id": "sessions-list-for-authenticated-member",
+    "line": 1,
+    "keyword": "Feature",
+    "name": "Sessions list for authenticated member",
+    "tags": [],
+    "uri": "..\\..\\features\\sessions-list.feature"
+  }
+]
