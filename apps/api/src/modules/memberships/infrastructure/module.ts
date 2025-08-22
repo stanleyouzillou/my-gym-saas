@@ -10,13 +10,24 @@ import {
 } from '../application/tokens';
 import { SyncUserUseCase } from '../application/use_cases/syncUser';
 import { ClerkWebhookController } from '../presentation/controllers/clerkWebhook.controller';
+import { SignupController } from '../presentation/controllers/signup.controller';
 import { SvixWebhookVerifier } from './providers/svixWebhook';
-import { FakeSignupController } from '../presentation/controllers/signup.controller';
 
 export const PRISMA_CLIENT = 'PRISMA_CLIENT_MEMBERSHIPS';
 
+const controllers: any[] = [ClerkWebhookController, SignupController];
+
+if (process.env.ENABLE_FAKE_SIGNUP === 'true') {
+  // Lazy load to avoid bundling in production builds
+
+  const {
+    FakeSignupController,
+  } = require('../presentation/controllers/fakeSignup.controller');
+  controllers.push(FakeSignupController);
+}
+
 @Module({
-  controllers: [ClerkWebhookController, FakeSignupController],
+  controllers,
   providers: [
     {
       provide: PRISMA_CLIENT,
