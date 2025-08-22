@@ -1,12 +1,9 @@
-export interface Booking {
-  id: string;
-  sessionId: string;
-  memberId: string;
-  createdAt: Date;
-}
+import { BookingEntity } from '../../domain/entities/Booking';
+import { SessionId } from '../../domain/value_objects/SessionId';
+import { MemberId } from '../../domain/value_objects/MemberId';
 
 export interface IBookingRepo {
-  create(booking: Booking): Promise<void>;
-  countBySession(sessionId: string): Promise<number>;
-  findByMemberSession(memberId: string, sessionId: string): Promise<Booking | null>;
+  create(booking: BookingEntity): Promise<void>;
+  countBySession(sessionId: SessionId): Promise<number>;
+  findByMemberSession(memberId: MemberId, sessionId: SessionId): Promise<BookingEntity | null>;
 }

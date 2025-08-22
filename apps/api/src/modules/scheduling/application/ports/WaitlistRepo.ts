@@ -1,13 +1,9 @@
-export interface WaitlistEntry {
-  id: string;
-  sessionId: string;
-  memberId: string;
-  position: number;
-  createdAt: Date;
-}
+import { WaitlistEntryEntity } from '../../domain/entities/WaitlistEntry';
+import { SessionId } from '../../domain/value_objects/SessionId';
+import { MemberId } from '../../domain/value_objects/MemberId';
 
 export interface IWaitlistRepo {
-  enqueue(entry: WaitlistEntry): Promise<void>;
-  countBySession(sessionId: string): Promise<number>;
-  findByMemberSession(memberId: string, sessionId: string): Promise<WaitlistEntry | null>;
+  enqueue(entry: WaitlistEntryEntity): Promise<void>;
+  countBySession(sessionId: SessionId): Promise<number>;
+  findByMemberSession(memberId: MemberId, sessionId: SessionId): Promise<WaitlistEntryEntity | null>;
 }
