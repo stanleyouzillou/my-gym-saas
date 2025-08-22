@@ -1,0 +1,369 @@
+diff --git a/apps/api/src/modules/scheduling/application/ports/BookingRepo.ts b/apps/api/src/modules/scheduling/application/ports/BookingRepo.ts
+index 555dac52178eb427904292bd9ab5bf54b09440ec..69eeeb3bb5d9e83b80a8ccb01e7216ccf03c951c 100644
+--- a/apps/api/src/modules/scheduling/application/ports/BookingRepo.ts
++++ b/apps/api/src/modules/scheduling/application/ports/BookingRepo.ts
+@@ -1,12 +1,9 @@
+-export interface Booking {
+-  id: string;
+-  sessionId: string;
+-  memberId: string;
+-  createdAt: Date;
+-}
++import { BookingEntity } from '../../domain/entities/Booking';
++import { SessionId } from '../../domain/value_objects/SessionId';
++import { MemberId } from '../../domain/value_objects/MemberId';
+ 
+ export interface IBookingRepo {
+-  create(booking: Booking): Promise<void>;
+-  countBySession(sessionId: string): Promise<number>;
+-  findByMemberSession(memberId: string, sessionId: string): Promise<Booking | null>;
++  create(booking: BookingEntity): Promise<void>;
++  countBySession(sessionId: SessionId): Promise<number>;
++  findByMemberSession(memberId: MemberId, sessionId: SessionId): Promise<BookingEntity | null>;
+ }
+diff --git a/apps/api/src/modules/scheduling/application/ports/WaitlistRepo.ts b/apps/api/src/modules/scheduling/application/ports/WaitlistRepo.ts
+index 1c630e4185332d95863f5444112ce3abdb2df94b..c0dfb1f82440bf1c47553694dc2f2fe4aaf2d104 100644
+--- a/apps/api/src/modules/scheduling/application/ports/WaitlistRepo.ts
++++ b/apps/api/src/modules/scheduling/application/ports/WaitlistRepo.ts
+@@ -1,13 +1,9 @@
+-export interface WaitlistEntry {
+-  id: string;
+-  sessionId: string;
+-  memberId: string;
+-  position: number;
+-  createdAt: Date;
+-}
++import { WaitlistEntryEntity } from '../../domain/entities/WaitlistEntry';
++import { SessionId } from '../../domain/value_objects/SessionId';
++import { MemberId } from '../../domain/value_objects/MemberId';
+ 
+ export interface IWaitlistRepo {
+-  enqueue(entry: WaitlistEntry): Promise<void>;
+-  countBySession(sessionId: string): Promise<number>;
+-  findByMemberSession(memberId: string, sessionId: string): Promise<WaitlistEntry | null>;
++  enqueue(entry: WaitlistEntryEntity): Promise<void>;
++  countBySession(sessionId: SessionId): Promise<number>;
++  findByMemberSession(memberId: MemberId, sessionId: SessionId): Promise<WaitlistEntryEntity | null>;
+ }
+diff --git a/apps/api/src/modules/scheduling/application/use_cases/registerForSession.ts b/apps/api/src/modules/scheduling/application/use_cases/registerForSession.ts
+index 15a145876546555a7e6919be83bce84dfac15137..8573a137bccc4e0703bfa5b6027ba6e09fc7a604 100644
+--- a/apps/api/src/modules/scheduling/application/use_cases/registerForSession.ts
++++ b/apps/api/src/modules/scheduling/application/use_cases/registerForSession.ts
+@@ -1,53 +1,62 @@
+ import { SessionRepo } from '../ports/SessionRepo';
+-import { IBookingRepo, Booking } from '../ports/BookingRepo';
+-import { IWaitlistRepo, WaitlistEntry } from '../ports/WaitlistRepo';
++import { IBookingRepo } from '../ports/BookingRepo';
++import { IWaitlistRepo } from '../ports/WaitlistRepo';
+ import type { Result } from '../common/result';
+ import { ok, err } from '../common/result';
+ import { Clock } from '../ports/Clock';
+ import { IdProvider } from '../ports/IdProvider';
++import { BookingEntity } from '../../domain/entities/Booking';
++import { WaitlistEntryEntity } from '../../domain/entities/WaitlistEntry';
++import { BookingId } from '../../domain/value_objects/BookingId';
++import { WaitlistEntryId } from '../../domain/value_objects/WaitlistEntryId';
++import { SessionId } from '../../domain/value_objects/SessionId';
++import { MemberId } from '../../domain/value_objects/MemberId';
+ 
+-export type RegisterOk = { kind: 'BOOKED'; booking: Booking } | { kind: 'WAITLISTED'; entry: WaitlistEntry };
++export type RegisterOk = { kind: 'BOOKED'; booking: BookingEntity } | { kind: 'WAITLISTED'; entry: WaitlistEntryEntity };
+ export type RegisterErr =
+   | { kind: 'SessionNotFound' }
+   | { kind: 'AlreadyRegistered' };
+ 
+ export class RegisterForSessionUseCase {
+   constructor(
+     private readonly sessions: SessionRepo,
+     private readonly bookings: IBookingRepo,
+     private readonly waitlist: IWaitlistRepo,
+     private readonly clock: Clock,
+     private readonly ids: IdProvider,
+   ) {}
+ 
+-  async execute(memberId: string, sessionId: string): Promise<Result<RegisterOk, RegisterErr>> {
+-    const session = await this.sessions.getById(sessionId);
++  async execute(memberIdRaw: string, sessionIdRaw: string): Promise<Result<RegisterOk, RegisterErr>> {
++    const sessionId = SessionId.create(sessionIdRaw);
++    const memberId = MemberId.create(memberIdRaw);
++
++    const session = await this.sessions.getById(sessionId.value);
+     if (!session) return err({ kind: 'SessionNotFound' });
+ 
+     const existing = await this.bookings.findByMemberSession(memberId, sessionId);
+     if (existing) return err({ kind: 'AlreadyRegistered' });
+ 
+     const count = await this.bookings.countBySession(sessionId);
+     if (count < session.maxCapacity) {
+-      const booking: Booking = {
+-        id: this.ids.next(),
++      const booking = BookingEntity.create({
++        id: BookingId.create(this.ids.next()),
+         sessionId,
+         memberId,
+         createdAt: this.clock.now(),
+-      };
++      });
+       await this.bookings.create(booking);
+       return ok({ kind: 'BOOKED', booking });
+     }
+ 
+     const position = (await this.waitlist.countBySession(sessionId)) + 1;
+-    const entry: WaitlistEntry = {
+-      id: this.ids.next(),
++    const entry = WaitlistEntryEntity.create({
++      id: WaitlistEntryId.create(this.ids.next()),
+       sessionId,
+       memberId,
+       position,
+       createdAt: this.clock.now(),
+-    };
++    });
+     await this.waitlist.enqueue(entry);
+     return ok({ kind: 'WAITLISTED', entry });
+   }
+ }
+diff --git a/apps/api/src/modules/scheduling/domain/entities/Booking.ts b/apps/api/src/modules/scheduling/domain/entities/Booking.ts
+index 19eff244f0dccf29b9e15db00ccc92048c9f883a..24087d436cb346dc0fef0bf4c3291adb4f91f5d0 100644
+--- a/apps/api/src/modules/scheduling/domain/entities/Booking.ts
++++ b/apps/api/src/modules/scheduling/domain/entities/Booking.ts
+@@ -1,8 +1,23 @@
++import { BookingId } from '../value_objects/BookingId';
++import { SessionId } from '../value_objects/SessionId';
++import { MemberId } from '../value_objects/MemberId';
++
+ export class BookingEntity {
+-  constructor(
+-    public readonly id: string,
+-    public readonly sessionId: string,
+-    public readonly memberId: string,
++  private constructor(
++    public readonly id: BookingId,
++    public readonly sessionId: SessionId,
++    public readonly memberId: MemberId,
+     public readonly createdAt: Date,
+   ) {}
++
++  static create(params: {
++    id: BookingId;
++    sessionId: SessionId;
++    memberId: MemberId;
++    createdAt: Date;
++  }): BookingEntity {
++    const { id, sessionId, memberId, createdAt } = params;
++    if (!createdAt) throw new Error('createdAt is required');
++    return new BookingEntity(id, sessionId, memberId, createdAt);
++  }
+ }
+diff --git a/apps/api/src/modules/scheduling/domain/entities/WaitlistEntry.ts b/apps/api/src/modules/scheduling/domain/entities/WaitlistEntry.ts
+index b970b066ae25baf8e884c6cefdf3278ab74f5b47..9f6398540a7fc48ffcfb5a84d811e64cc4930ac0 100644
+--- a/apps/api/src/modules/scheduling/domain/entities/WaitlistEntry.ts
++++ b/apps/api/src/modules/scheduling/domain/entities/WaitlistEntry.ts
+@@ -1,9 +1,28 @@
++import { WaitlistEntryId } from '../value_objects/WaitlistEntryId';
++import { SessionId } from '../value_objects/SessionId';
++import { MemberId } from '../value_objects/MemberId';
++
+ export class WaitlistEntryEntity {
+-  constructor(
+-    public readonly id: string,
+-    public readonly sessionId: string,
+-    public readonly memberId: string,
++  private constructor(
++    public readonly id: WaitlistEntryId,
++    public readonly sessionId: SessionId,
++    public readonly memberId: MemberId,
+     public readonly position: number,
+     public readonly createdAt: Date,
+   ) {}
++
++  static create(params: {
++    id: WaitlistEntryId;
++    sessionId: SessionId;
++    memberId: MemberId;
++    position: number;
++    createdAt: Date;
++  }): WaitlistEntryEntity {
++    const { id, sessionId, memberId, position, createdAt } = params;
++    if (!Number.isInteger(position) || position <= 0) {
++      throw new Error('position must be a positive integer');
++    }
++    if (!createdAt) throw new Error('createdAt is required');
++    return new WaitlistEntryEntity(id, sessionId, memberId, position, createdAt);
++  }
+ }
+diff --git a/apps/api/src/modules/scheduling/domain/value_objects/BookingId.ts b/apps/api/src/modules/scheduling/domain/value_objects/BookingId.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..7408bb856277000821208a3cef9efc8b5608ac5a
+--- /dev/null
++++ b/apps/api/src/modules/scheduling/domain/value_objects/BookingId.ts
+@@ -0,0 +1,12 @@
++export class BookingId {
++  private constructor(public readonly value: string) {}
++
++  static create(raw: string): BookingId {
++    if (!raw || raw.trim().length === 0) throw new Error('BookingId cannot be empty');
++    return new BookingId(raw);
++  }
++
++  equals(other: BookingId): boolean {
++    return this.value === other.value;
++  }
++}
+diff --git a/apps/api/src/modules/scheduling/domain/value_objects/MemberId.ts b/apps/api/src/modules/scheduling/domain/value_objects/MemberId.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..ca52b3b9cdfb9d6ae09fbbc0bf8741c48b58e28b
+--- /dev/null
++++ b/apps/api/src/modules/scheduling/domain/value_objects/MemberId.ts
+@@ -0,0 +1,12 @@
++export class MemberId {
++  private constructor(public readonly value: string) {}
++
++  static create(raw: string): MemberId {
++    if (!raw || raw.trim().length === 0) throw new Error('MemberId cannot be empty');
++    return new MemberId(raw);
++  }
++
++  equals(other: MemberId): boolean {
++    return this.value === other.value;
++  }
++}
+diff --git a/apps/api/src/modules/scheduling/domain/value_objects/SessionId.ts b/apps/api/src/modules/scheduling/domain/value_objects/SessionId.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..407719e399310a47566f3025e15d8b3355e4662d
+--- /dev/null
++++ b/apps/api/src/modules/scheduling/domain/value_objects/SessionId.ts
+@@ -0,0 +1,12 @@
++export class SessionId {
++  private constructor(public readonly value: string) {}
++
++  static create(raw: string): SessionId {
++    if (!raw || raw.trim().length === 0) throw new Error('SessionId cannot be empty');
++    return new SessionId(raw);
++  }
++
++  equals(other: SessionId): boolean {
++    return this.value === other.value;
++  }
++}
+diff --git a/apps/api/src/modules/scheduling/domain/value_objects/WaitlistEntryId.ts b/apps/api/src/modules/scheduling/domain/value_objects/WaitlistEntryId.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..628ff546d45a9139774526dc3443266a8095d773
+--- /dev/null
++++ b/apps/api/src/modules/scheduling/domain/value_objects/WaitlistEntryId.ts
+@@ -0,0 +1,12 @@
++export class WaitlistEntryId {
++  private constructor(public readonly value: string) {}
++
++  static create(raw: string): WaitlistEntryId {
++    if (!raw || raw.trim().length === 0) throw new Error('WaitlistEntryId cannot be empty');
++    return new WaitlistEntryId(raw);
++  }
++
++  equals(other: WaitlistEntryId): boolean {
++    return this.value === other.value;
++  }
++}
+diff --git a/apps/api/src/modules/scheduling/infrastructure/adapters/inMemory/bookingRepo.ts b/apps/api/src/modules/scheduling/infrastructure/adapters/inMemory/bookingRepo.ts
+index a1146706ebd4729db7f136383777ec9d0b534276..6ee0d05e4d90ff8451bdc44ab3cc01b5dfa99c2f 100644
+--- a/apps/api/src/modules/scheduling/infrastructure/adapters/inMemory/bookingRepo.ts
++++ b/apps/api/src/modules/scheduling/infrastructure/adapters/inMemory/bookingRepo.ts
+@@ -1,16 +1,19 @@
+-import { IBookingRepo, Booking } from '../../../application/ports/BookingRepo';
++import { IBookingRepo } from '../../../application/ports/BookingRepo';
++import { BookingEntity } from '../../../domain/entities/Booking';
++import { SessionId } from '../../../domain/value_objects/SessionId';
++import { MemberId } from '../../../domain/value_objects/MemberId';
+ 
+ export class InMemoryBookingRepo implements IBookingRepo {
+-  private items: Booking[] = [];
++  private items: BookingEntity[] = [];
+ 
+-  async create(booking: Booking): Promise<void> {
++  async create(booking: BookingEntity): Promise<void> {
+     this.items.push(booking);
+   }
+-  async countBySession(sessionId: string): Promise<number> {
+-    return this.items.filter(b => b.sessionId === sessionId).length;
++  async countBySession(sessionId: SessionId): Promise<number> {
++    return this.items.filter(b => b.sessionId.value === sessionId.value).length;
+   }
+-  async findByMemberSession(memberId: string, sessionId: string): Promise<Booking | null> {
+-    return this.items.find(b => b.memberId === memberId && b.sessionId === sessionId) ?? null;
++  async findByMemberSession(memberId: MemberId, sessionId: SessionId): Promise<BookingEntity | null> {
++    return this.items.find(b => b.memberId.value === memberId.value && b.sessionId.value === sessionId.value) ?? null;
+   }
+   clear() { this.items = []; }
+ }
+diff --git a/apps/api/src/modules/scheduling/infrastructure/adapters/inMemory/waitlistRepo.ts b/apps/api/src/modules/scheduling/infrastructure/adapters/inMemory/waitlistRepo.ts
+index 266d7665858aba03219690259eec2dd1c72ad321..f1017700a76987f9d2848e5cd1dfd1b1399e9bf2 100644
+--- a/apps/api/src/modules/scheduling/infrastructure/adapters/inMemory/waitlistRepo.ts
++++ b/apps/api/src/modules/scheduling/infrastructure/adapters/inMemory/waitlistRepo.ts
+@@ -1,16 +1,19 @@
+-import { IWaitlistRepo, WaitlistEntry } from '../../../application/ports/WaitlistRepo';
++import { IWaitlistRepo } from '../../../application/ports/WaitlistRepo';
++import { WaitlistEntryEntity } from '../../../domain/entities/WaitlistEntry';
++import { SessionId } from '../../../domain/value_objects/SessionId';
++import { MemberId } from '../../../domain/value_objects/MemberId';
+ 
+ export class InMemoryWaitlistRepo implements IWaitlistRepo {
+-  private items: WaitlistEntry[] = [];
++  private items: WaitlistEntryEntity[] = [];
+ 
+-  async enqueue(entry: WaitlistEntry): Promise<void> {
++  async enqueue(entry: WaitlistEntryEntity): Promise<void> {
+     this.items.push(entry);
+   }
+-  async countBySession(sessionId: string): Promise<number> {
+-    return this.items.filter(e => e.sessionId === sessionId).length;
++  async countBySession(sessionId: SessionId): Promise<number> {
++    return this.items.filter(e => e.sessionId.value === sessionId.value).length;
+   }
+-  async findByMemberSession(memberId: string, sessionId: string): Promise<WaitlistEntry | null> {
+-    return this.items.find(e => e.memberId === memberId && e.sessionId === sessionId) ?? null;
++  async findByMemberSession(memberId: MemberId, sessionId: SessionId): Promise<WaitlistEntryEntity | null> {
++    return this.items.find(e => e.memberId.value === memberId.value && e.sessionId.value === sessionId.value) ?? null;
+   }
+   clear() { this.items = []; }
+ }
+diff --git a/apps/api/src/modules/scheduling/presentation/controllers/sessions.controller.ts b/apps/api/src/modules/scheduling/presentation/controllers/sessions.controller.ts
+index 9df7e8b3e8693547ee23414954140dbc3e0af0a0..374c228e2b27e128752763e92e709c417086ece8 100644
+--- a/apps/api/src/modules/scheduling/presentation/controllers/sessions.controller.ts
++++ b/apps/api/src/modules/scheduling/presentation/controllers/sessions.controller.ts
+@@ -88,35 +88,35 @@ export class SchedulingSessionsController {
+       coachName: created.coachName ?? null,
+     };
+   }
+ 
+   @Post(':id/register')
+   @UseGuards(ClerkAuthGuard)
+   async register(@Param('id') id: string, @Req() req: any) {
+     // Resolve current member: prefer Clerk identity (email), fallback to header in dev
+     let memberId = '';
+     const emailFromReq: string | undefined = req.user?.email;
+     if (emailFromReq) {
+       const email = Email.create(emailFromReq);
+       const found = await this.members.findByEmail(email);
+       if (!found) {
+         throw new BadRequestException('Member not found for authenticated user');
+       }
+       memberId = found.id;
+     } else {
+       memberId = (req.headers['x-member-id'] as string) || '';
+     }
+     if (!memberId) throw new BadRequestException('Missing member identity');
+     const result = await this.registerForSessionUc.execute(memberId, id);
+     if (result.ok) {
+       const value = result.value;
+       if (value.kind === 'BOOKED') {
+-        return { status: 'BOOKED', bookingId: value.booking.id };
++        return { status: 'BOOKED', bookingId: value.booking.id.value };
+       }
+       return { status: 'WAITLISTED', position: value.entry.position };
+     }
+     const kind = result.error.kind;
+     if (kind === 'SessionNotFound') throw new BadRequestException('Session not found');
+     if (kind === 'AlreadyRegistered') throw new BadRequestException('Already registered');
+     throw new BadRequestException('Unable to register');
+   }
+ }

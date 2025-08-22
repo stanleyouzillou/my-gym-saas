@@ -1,0 +1,19 @@
+ (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
+diff --git a/apps/api/src/modules/scheduling/application/tokens.ts b/apps/api/src/modules/scheduling/application/tokens.ts
+index de5b043bda96f139247b6464d23230e50d545a0a..f3442608ee9142fcc33619db384d7452fd57ad2a 100644
+--- a/apps/api/src/modules/scheduling/application/tokens.ts
++++ b/apps/api/src/modules/scheduling/application/tokens.ts
+@@ -1,7 +1,10 @@
+ export const ISessionRepoToken = 'Scheduling.ISessionRepo';
+ export const IBookingRepoToken = 'Scheduling.IBookingRepo';
+ export const IWaitlistRepoToken = 'Scheduling.IWaitlistRepo';
++export const IClockToken = 'Scheduling.IClock';
++export const IIdProviderToken = 'Scheduling.IIdProvider';
++export const IEventBusToken = 'Scheduling.IEventBus';
+ 
+ export const ListSessionsUseCaseToken = 'Scheduling.ListSessionsUseCase';
+ export const CreateSessionUseCaseToken = 'Scheduling.CreateSessionUseCase';
+ export const RegisterForSessionUseCaseToken = 'Scheduling.RegisterForSessionUseCase';
+ 
+EOF
+)

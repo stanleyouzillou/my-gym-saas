@@ -1,0 +1,154 @@
+ (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
+diff --git a/apps/api/src/modules/memberships/infrastructure/adapters/prisma/prismaMemberRepo.int.spec.ts b/apps/api/src/modules/memberships/infrastructure/adapters/prisma/prismaMemberRepo.int.spec.ts
+index 3f71fe8e5f8960ae413a15a77e6929e8a8e085bd..1380390d9a39a083a89abb80138166df07709e85 100644
+--- a/apps/api/src/modules/memberships/infrastructure/adapters/prisma/prismaMemberRepo.int.spec.ts
++++ b/apps/api/src/modules/memberships/infrastructure/adapters/prisma/prismaMemberRepo.int.spec.ts
+@@ -1,46 +1,49 @@
+ import { PrismaClient } from '@prisma/client';
+ import { PrismaMemberRepository } from './memberRepo';
+ import { PrismaTenantRepository } from './tenantRepo';
+ import { Email } from '../../../domain/value_objects/Email';
+ import { Member } from '../../../domain/entities/Member';
+ 
+ // Integration tests for PrismaMemberRepository contract
+ // Requires DATABASE_URL set (handled via repo env and jest setup already)
+ const hasDb = !!process.env.DATABASE_URL;
+ 
+ (hasDb ? describe : describe.skip)('PrismaMemberRepository (integration)', () => {
+-  const prisma = new PrismaClient();
+-  const members = new PrismaMemberRepository(prisma);
+-  const tenants = new PrismaTenantRepository(prisma);
++  let prisma: PrismaClient;
++  let members: PrismaMemberRepository;
++  let tenants: PrismaTenantRepository;
+ 
+   const unique = `t_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+   const tenantName = `Tenant_${unique}`;
+ 
+   let tenantId = '';
+ 
+   beforeAll(async () => {
++    prisma = new PrismaClient();
++    members = new PrismaMemberRepository(prisma);
++    tenants = new PrismaTenantRepository(prisma);
+     const t = await tenants.create(tenantName);
+     tenantId = t.id;
+   });
+ 
+   afterAll(async () => {
+     // best-effort cleanup
+     await prisma.member.deleteMany({ where: { tenantId } }).catch(() => {});
+     await prisma.tenant.deleteMany({ where: { id: tenantId } }).catch(() => {});
+     await prisma.$disconnect();
+   });
+ 
+   it('saves and finds by email', async () => {
+     const email = Email.create(`${unique}@example.com`);
+     const m = Member.create({
+       id: '',
+       tenantId,
+       email,
+       firstName: 'First',
+       lastName: 'Last',
+       createdAt: new Date(),
+     });
+ 
+     await members.save(m);
+ 
+     const found = await members.findByEmail(email);
+diff --git a/apps/api/src/modules/memberships/infrastructure/adapters/prisma/prismaTenantRepo.int.spec.ts b/apps/api/src/modules/memberships/infrastructure/adapters/prisma/prismaTenantRepo.int.spec.ts
+index 251f69dadee014abd63e480b6a7b61464007f1b0..224f74fca0f78e2435195c750b15da220cb47775 100644
+--- a/apps/api/src/modules/memberships/infrastructure/adapters/prisma/prismaTenantRepo.int.spec.ts
++++ b/apps/api/src/modules/memberships/infrastructure/adapters/prisma/prismaTenantRepo.int.spec.ts
+@@ -1,28 +1,33 @@
+ import { PrismaClient } from '@prisma/client';
+ import { PrismaTenantRepository } from './tenantRepo';
+ 
+ // Integration tests for PrismaTenantRepository contract
+ const hasDb = !!process.env.DATABASE_URL;
+ 
+ (hasDb ? describe : describe.skip)('PrismaTenantRepository (integration)', () => {
+-  const prisma = new PrismaClient();
+-  const tenants = new PrismaTenantRepository(prisma);
++  let prisma: PrismaClient;
++  let tenants: PrismaTenantRepository;
+   const unique = `t_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+   const tenantName = `Tenant_${unique}`;
+ 
++  beforeAll(() => {
++    prisma = new PrismaClient();
++    tenants = new PrismaTenantRepository(prisma);
++  });
++
+   afterAll(async () => {
+     await prisma.tenant.deleteMany({ where: { name: tenantName } }).catch(() => {});
+     await prisma.$disconnect();
+   });
+ 
+   it('creates and finds by name', async () => {
+     const created = await tenants.create(tenantName);
+     expect(created.id).toBeTruthy();
+     expect(created.name).toBe(tenantName);
+ 
+     const found = await tenants.findByName(tenantName);
+     expect(found).toBeTruthy();
+     expect(found?.id).toBe(created.id);
+     expect(found?.name).toBe(tenantName);
+   });
+ });
+diff --git a/apps/api/src/modules/memberships/infrastructure/compose.ts b/apps/api/src/modules/memberships/infrastructure/compose.ts
+index 2345f6ed896018da46d0d952683f9af6312b589e..0b2d18fc44f7e7e4fa86d4345a3a00f3580aaf88 100644
+--- a/apps/api/src/modules/memberships/infrastructure/compose.ts
++++ b/apps/api/src/modules/memberships/infrastructure/compose.ts
+@@ -1,26 +1,28 @@
++import { PrismaClient } from '@prisma/client';
+ import { PrismaMemberRepository } from './adapters/prisma/memberRepo';
+-import { getPrisma } from './providers/db/prismaClient';
+ import type { IMemberRepository } from '../application/ports/MemberRepo';
+ import type { ITenantRepository } from '../application/ports/TenantRepo';
+ import { PrismaTenantRepository } from './adapters/prisma/tenantRepo';
+ import { SyncUserUseCase } from '../application/use_cases/syncUser';
+ 
+ export type MembershipsDeps = {
+   memberRepo: IMemberRepository;
+   tenantRepo: ITenantRepository;
+   syncUser: SyncUserUseCase;
+ };
+ 
++let prisma: PrismaClient | null = null;
+ let singleton: MembershipsDeps | null = null;
+ 
+ export function getMembershipsDeps(): MembershipsDeps {
+   if (!singleton) {
+-    // For now we only support Prisma for Memberships per request
+-    const prisma = getPrisma();
++    if (!prisma) {
++      prisma = new PrismaClient();
++    }
+     const memberRepo = new PrismaMemberRepository(prisma);
+     const tenantRepo = new PrismaTenantRepository(prisma);
+     const syncUser = new SyncUserUseCase(tenantRepo, memberRepo);
+     singleton = { memberRepo, tenantRepo, syncUser };
+   }
+   return singleton;
+ }
+diff --git a/apps/api/src/modules/memberships/infrastructure/providers/db/prismaClient.ts b/apps/api/src/modules/memberships/infrastructure/providers/db/prismaClient.ts
+deleted file mode 100644
+index 52374a5903c15bb5f920b30946bb0e205c796b43..0000000000000000000000000000000000000000
+--- a/apps/api/src/modules/memberships/infrastructure/providers/db/prismaClient.ts
++++ /dev/null
+@@ -1,11 +0,0 @@
+-import { PrismaClient } from '@prisma/client';
+-
+-// Singleton Prisma client for the Memberships bounded context
+-let prisma: PrismaClient | null = null;
+-
+-export function getPrisma() {
+-  if (!prisma) {
+-    prisma = new PrismaClient();
+-  }
+-  return prisma;
+-}
+ 
+EOF
+)
