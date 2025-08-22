@@ -110,7 +110,7 @@ export class SchedulingSessionsController {
     if (result.ok) {
       const value = result.value;
       if (value.kind === 'BOOKED') {
-        return { status: 'BOOKED', bookingId: value.booking.id };
+        return { status: 'BOOKED', bookingId: value.booking.id.value };
       }
       return { status: 'WAITLISTED', position: value.entry.position };
     }
