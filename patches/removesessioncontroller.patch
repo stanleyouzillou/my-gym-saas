@@ -1,0 +1,28 @@
+ (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
+diff --git a/apps/api/src/sessions.controller.ts b/apps/api/src/sessions.controller.ts
+deleted file mode 100644
+index 4ed3dde4d63997853061f8090c9b9c31f7b83316..0000000000000000000000000000000000000000
+--- a/apps/api/src/sessions.controller.ts
++++ /dev/null
+@@ -1,18 +0,0 @@
+-import { Controller, Get } from '@nestjs/common';
+-
+-@Controller('sessions')
+-export class SessionsController {
+-  @Get()
+-  list() {
+-    return [
+-      {
+-        id: 'sess_1',
+-        programId: 'prog_1',
+-        startsAt: new Date(Date.now() + 3600_000).toISOString(),
+-        durationMin: 60,
+-        capacity: 12,
+-        instructor: 'Alex',
+-      },
+-    ];
+-  }
+-}
+ 
+EOF
+)
