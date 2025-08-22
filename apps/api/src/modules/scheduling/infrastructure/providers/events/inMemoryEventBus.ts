@@ -1,6 +1,6 @@
-export type DomainEvent = { type: string; payload: any; occurredAt: string };
+import { EventBus, DomainEvent } from '../../../application/ports/EventBus';
 
-export class InMemoryEventBus {
+export class InMemoryEventBus implements EventBus {
   private events: DomainEvent[] = [];
 
   emit(event: DomainEvent) {

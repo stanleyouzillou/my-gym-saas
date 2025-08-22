@@ -1,5 +1,15 @@
 import { Module } from '@nestjs/common';
-import { ISessionRepoToken, IBookingRepoToken, IWaitlistRepoToken, ListSessionsUseCaseToken, CreateSessionUseCaseToken, RegisterForSessionUseCaseToken } from '../application/tokens';
+import {
+  ISessionRepoToken,
+  IBookingRepoToken,
+  IWaitlistRepoToken,
+  ListSessionsUseCaseToken,
+  CreateSessionUseCaseToken,
+  RegisterForSessionUseCaseToken,
+  IClockToken,
+  IIdProviderToken,
+  IEventBusToken,
+} from '../application/tokens';
 import { InMemorySessionRepo, seedSessions } from './adapters/inMemory/sessionRepo';
 import { PrismaSessionRepo } from './adapters/prisma/sessionRepo';
 import { getPrisma } from './providers/db/prismaClient';
@@ -11,6 +21,12 @@ import { RegisterForSessionUseCase } from '../application/use_cases/registerForS
 import { SystemClock } from './providers/clock/systemClock';
 import { UuidProvider } from './providers/id/uuidProvider';
 import { InMemoryEventBus } from './providers/events/inMemoryEventBus';
+import { Clock } from '../application/ports/Clock';
+import { IdProvider } from '../application/ports/IdProvider';
+import { EventBus } from '../application/ports/EventBus';
+import { SessionRepo } from '../application/ports/SessionRepo';
+import { IBookingRepo } from '../application/ports/BookingRepo';
+import { IWaitlistRepo } from '../application/ports/WaitlistRepo';
 
 @Module({
   providers: [
@@ -26,32 +42,32 @@ import { InMemoryEventBus } from './providers/events/inMemoryEventBus';
     { provide: IWaitlistRepoToken, useClass: InMemoryWaitlistRepo },
 
     // Cross-cutting providers
-    { provide: SystemClock, useClass: SystemClock },
-    { provide: UuidProvider, useClass: UuidProvider },
-    { provide: InMemoryEventBus, useClass: InMemoryEventBus },
+    { provide: IClockToken, useClass: SystemClock },
+    { provide: IIdProviderToken, useClass: UuidProvider },
+    { provide: IEventBusToken, useClass: InMemoryEventBus },
 
     // Use cases
     {
       provide: ListSessionsUseCaseToken,
-      useFactory: (sessionsRepo: any) => new ListSessionsUseCase(sessionsRepo),
+      useFactory: (sessionsRepo: SessionRepo) => new ListSessionsUseCase(sessionsRepo),
       inject: [ISessionRepoToken],
     },
     {
       provide: CreateSessionUseCaseToken,
-      useFactory: (sessionsRepo: any, clock: SystemClock, ids: UuidProvider, events: InMemoryEventBus) =>
+      useFactory: (sessionsRepo: SessionRepo, clock: Clock, ids: IdProvider, events: EventBus) =>
         new CreateSessionUseCase(sessionsRepo, clock, ids, events),
-      inject: [ISessionRepoToken, SystemClock, UuidProvider, InMemoryEventBus],
+      inject: [ISessionRepoToken, IClockToken, IIdProviderToken, IEventBusToken],
     },
     {
       provide: RegisterForSessionUseCaseToken,
       useFactory: (
-        sessionsRepo: any,
-        bookingRepo: any,
-        waitlistRepo: any,
-        clock: SystemClock,
-        ids: UuidProvider,
+        sessionsRepo: SessionRepo,
+        bookingRepo: IBookingRepo,
+        waitlistRepo: IWaitlistRepo,
+        clock: Clock,
+        ids: IdProvider,
       ) => new RegisterForSessionUseCase(sessionsRepo, bookingRepo, waitlistRepo, clock, ids),
-      inject: [ISessionRepoToken, IBookingRepoToken, IWaitlistRepoToken, SystemClock, UuidProvider],
+      inject: [ISessionRepoToken, IBookingRepoToken, IWaitlistRepoToken, IClockToken, IIdProviderToken],
     },
   ],
   exports: [
