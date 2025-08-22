@@ -1,5 +1,5 @@
+import { PrismaClient } from '@prisma/client';
 import { PrismaMemberRepository } from './adapters/prisma/memberRepo';
-import { getPrisma } from './providers/db/prismaClient';
 import type { IMemberRepository } from '../application/ports/MemberRepo';
 import type { ITenantRepository } from '../application/ports/TenantRepo';
 import { PrismaTenantRepository } from './adapters/prisma/tenantRepo';
@@ -11,12 +11,14 @@ export type MembershipsDeps = {
   syncUser: SyncUserUseCase;
 };
 
+let prisma: PrismaClient | null = null;
 let singleton: MembershipsDeps | null = null;
 
 export function getMembershipsDeps(): MembershipsDeps {
   if (!singleton) {
-    // For now we only support Prisma for Memberships per request
-    const prisma = getPrisma();
+    if (!prisma) {
+      prisma = new PrismaClient();
+    }
     const memberRepo = new PrismaMemberRepository(prisma);
     const tenantRepo = new PrismaTenantRepository(prisma);
     const syncUser = new SyncUserUseCase(tenantRepo, memberRepo);
